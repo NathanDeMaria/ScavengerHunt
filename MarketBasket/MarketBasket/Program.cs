@@ -94,6 +94,14 @@ namespace MarketBasket
 			}
 			var f3 = c3.Where(x => x.Value >= s).ToList();
 
+			using (var writer = new StreamWriter("../../../../output.txt"))
+			{
+				foreach (var itemSet in f3)
+				{
+					writer.WriteLine(PrintSet(itemSet));
+				}
+			}
+
 			sw.Stop();
 
 			if (sw.ElapsedMilliseconds < 1000)
@@ -106,6 +114,22 @@ namespace MarketBasket
 			}
 			Console.WriteLine("\nPress the any key to exit.");
 			Console.ReadKey();
+		}
+
+		private static string PrintSet(KeyValuePair<Tuple<int, int, int>, int> itemSet)
+		{
+			StringBuilder result = new StringBuilder();
+
+			result.Append("(");
+			result.Append(itemSet.Key.Item1);
+			result.Append(", ");
+			result.Append(itemSet.Key.Item2);
+			result.Append(", ");
+			result.Append(itemSet.Key.Item3);
+			result.Append(") ");
+			result.Append(itemSet.Value);
+
+			return result.ToString();
 		}
 
 		public static Basket ReadBasket(string path)
