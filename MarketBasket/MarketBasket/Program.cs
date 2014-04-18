@@ -30,6 +30,22 @@ namespace MarketBasket
                 }
             }
 
+            var f1 = items.Where(x => x.Value >= 3) as ConcurrentDictionary<int, int>;
+            var pairs = new Dictionary<ItemPair, int>();
+
+            var keys = f1.Keys.ToList();
+            for (int i = 0; i < keys.Count; i++)
+            {
+                for (int j = i+1; j <keys.Count; j++)
+                {
+                    pairs.Add(new ItemPair
+                    {
+                        ItemOneId = keys[i],
+                        ItemTwoId = keys[j]
+                    }, 0);
+                }
+            }
+
             sw.Stop();
 
             if (sw.ElapsedMilliseconds < 1000)
