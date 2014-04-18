@@ -11,7 +11,6 @@ namespace MarketBasket
         public int CustomerId { get; set; }
         public string State { get; set; }
         public string Weekday { get; set; }
-        public int ItemNum { get; set; }
         public ICollection<Item> Items { get; set; }
     }
 }
