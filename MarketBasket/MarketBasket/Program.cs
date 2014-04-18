@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,11 +18,15 @@ namespace MarketBasket
             Console.ReadLine();
 
             List<Basket> baskets = new List<Basket>();
+            ConcurrentDictionary<int, int> items = new ConcurrentDictionary<int, int>();
             for (int i = 0; i < NUM_BASKETS; i++)
             {
-                if(i%100 == 0)
-                    Console.WriteLine("read thing #" + i);
-                baskets.Add(ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"));
+                var basket = ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"); 
+                baskets.Add(basket);
+                foreach (var item in basket.Items)
+                {
+                    items.AddOrUpdate(item.ItemId, 1, (key, value) => value + 1);
+                }
             }
             Console.ReadLine();
         }
