@@ -53,28 +53,18 @@ namespace MarketBasket
 			}
 
 			var f2 = c2.Where(x => x.Value >= s).ToList();
-			var singleItems = new List<Item>();
+
+			/*
+			 * The pool of items that could be in a triple with support s consists of
+			 * items that are in at least two pairs with support s
+			 */
+			var singleItems = new ConcurrentDictionary<int, int>();
 			foreach (var pair in f2)
 			{
-				if (singleItems.Select(x => x.ItemId).Contains(pair.Key.Item1))
-				{
-					singleItems.Where(x => x.ItemId == pair.Key.Item1).FirstOrDefault().Count++;
-				}
-				else
-				{
-					singleItems.Add(new Item() { ItemId = pair.Key.Item1, Count = 1 });
-				}
-
-				if (singleItems.Select(x => x.ItemId).Contains(pair.Key.Item2))
-				{
-					singleItems.Where(x => x.ItemId == pair.Key.Item2).FirstOrDefault().Count++;
-				}
-				else
-				{
-					singleItems.Add(new Item() { ItemId = pair.Key.Item2, Count = 1 });
-				}
+				singleItems.AddOrUpdate(pair.Key.Item1, 1, (key, value) => value + 1);
+				singleItems.AddOrUpdate(pair.Key.Item2, 1, (key, value) => value + 1);
 			}
-			var triplePool = singleItems.Where(x => (x.Count >= 2)).Select(x => x.ItemId).ToList();
+			var triplePool = singleItems.Keys.Where(x => x >= 2);
 
 			var c3 = new ConcurrentDictionary<Tuple<int, int, int>, int>();
 			foreach (var basket in baskets)
@@ -112,9 +102,8 @@ namespace MarketBasket
 			}
 			else
 			{
-				Console.WriteLine("\nProcessing Time: {0:00}:{1:00}.{2:00}", sw.Elapsed.Hours, sw.Elapsed.Minutes, sw.Elapsed.Seconds, sw.Elapsed.Milliseconds / 10);
+				Console.WriteLine("\nProcessing Time: {0:00}:{1:00}.{2:00}:{3:000}", sw.Elapsed.Hours, sw.Elapsed.Minutes, sw.Elapsed.Seconds, sw.Elapsed.Milliseconds);
 			}
-
 			Console.WriteLine("\nPress the any key to exit.");
 			Console.ReadKey();
 		}
