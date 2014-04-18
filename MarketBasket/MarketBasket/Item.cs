@@ -12,20 +12,4 @@ namespace MarketBasket
         public string Review { get; set; }
         public int Count { get; set; }
     }
-
-    class ItemPair
-    {
-        public int ItemOneId { get; set; }
-        public int ItemTwoId { get; set; }
-        public int Count { get; set; }
-    }
-
-    class ItemTriple
-    {
-        public int ItemOneId { get; set; }
-        public int ItemTwoId { get; set; }
-        public int ItemThreeId { get; set; }
-        public int Count { get; set; }
-
-    }
 }

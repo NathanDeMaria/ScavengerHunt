@@ -20,7 +20,6 @@ namespace MarketBasket
             sw.Start();
 
             List<Basket> baskets = new List<Basket>();
-            //List<Item> c1 = new List<Item>();
 			ConcurrentDictionary<int, int> c1 = new ConcurrentDictionary<int, int>();
             for(int i = 0; i < NUM_BASKETS; i++)
             {
@@ -32,22 +31,10 @@ namespace MarketBasket
 					{
 						c1[item.ItemId]++;
 					}
-
-					//var foundItem = c1.Where(x => x.ItemId == item.ItemId).FirstOrDefault();
-					//if (foundItem != null)
-					//{
-					//	foundItem.Count++;
-					//}
-					//else
-					//{
-					//	c1.Add(item);
-					//	item.Count = 1;
-					//}
                 }
             }
             var f1 = c1.Where(x => x.Value >= s).Select(x => x.Key).ToList();
-            var c2 = new List<ItemPair>();
-			var c2Prime = new ConcurrentDictionary<int[], int>();
+			var c2 = new ConcurrentDictionary<Tuple<int, int>, int>();
 
             foreach (var basket in baskets)
             {
@@ -59,37 +46,11 @@ namespace MarketBasket
 						{
 							if (f1.Contains(basket.Items[j].ItemId))
 							{
-								int[] itemPair;
-								if(basket.Items[i].ItemId < basket.Items[j].ItemId)
-								{
-									itemPair = new int[]{ basket.Items[i].ItemId, basket.Items[j].ItemId };
-								}
-								else
-								{
-									itemPair = new int[] { basket.Items[j].ItemId, basket.Items[i].ItemId };
-								}					
+								var itemPair = new Tuple<int, int>(basket.Items[i].ItemId, basket.Items[j].ItemId);			
 
-								if(!c2Prime.TryAdd(itemPair, 1))
+								if(!c2.TryAdd(itemPair, 1))
 								{
-									c2Prime[itemPair]++;
-								}
-
-
-								//might be able to take the second part out, but not sure
-								var foundItem = c2.Where(x => (x.ItemOneId == basket.Items[i].ItemId && x.ItemTwoId == basket.Items[j].ItemId) ||
-																(x.ItemOneId == basket.Items[j].ItemId && x.ItemTwoId == basket.Items[i].ItemId)).FirstOrDefault();
-								if (foundItem == null)
-								{
-									c2.Add(new ItemPair
-									{
-										ItemOneId = basket.Items[i].ItemId,
-										ItemTwoId = basket.Items[j].ItemId,
-										Count = 1
-									});
-								}
-								else
-								{
-									foundItem.Count++;
+									c2[itemPair]++;
 								}
 							}
 						}
@@ -97,31 +58,31 @@ namespace MarketBasket
 				}
             }
 
-			var f2 = c2.Where(x => x.Count >= s).ToList();
+			var f2 = c2.Where(x => x.Value >= s).ToList();
 			var singleItems = new List<Item>();
 			foreach(var pair in f2)
 			{
-				if (singleItems.Select(x => x.ItemId).Contains(pair.ItemOneId))
+				if (singleItems.Select(x => x.ItemId).Contains(pair.Key.Item1))
 				{
-					singleItems.Where(x => x.ItemId == pair.ItemOneId).FirstOrDefault().Count++;
+					singleItems.Where(x => x.ItemId == pair.Key.Item1).FirstOrDefault().Count++;
 				}
 				else
 				{
-					singleItems.Add(new Item() { ItemId = pair.ItemOneId, Count = 1 });
+					singleItems.Add(new Item() { ItemId = pair.Key.Item1, Count = 1 });
 				}
 
-				if (singleItems.Select(x => x.ItemId).Contains(pair.ItemTwoId))
+				if (singleItems.Select(x => x.ItemId).Contains(pair.Key.Item2))
 				{
-					singleItems.Where(x => x.ItemId == pair.ItemTwoId).FirstOrDefault().Count++;
+					singleItems.Where(x => x.ItemId == pair.Key.Item2).FirstOrDefault().Count++;
 				}
 				else
 				{
-					singleItems.Add(new Item() { ItemId = pair.ItemTwoId, Count = 1 });
+					singleItems.Add(new Item() { ItemId = pair.Key.Item2, Count = 1 });
 				}
 			}
 			var triplePool = singleItems.Where(x => (x.Count >= 2)).Select(x => x.ItemId).ToList();
 
-			var c3 = new List<ItemTriple>();
+			var c3 = new ConcurrentDictionary<Tuple<int, int, int>, int>();
 			foreach (var basket in baskets)
 			{
 				for (int i = 0; i < basket.Items.Count - 2; i++)
@@ -136,22 +97,11 @@ namespace MarketBasket
 								{
 									if (triplePool.Contains(basket.Items[k].ItemId))
 									{
-										var tripleItems = new List<int>() { basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId };
+										var itemTriplet = new Tuple<int, int, int>(basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId);
 
-										var foundItem = c3.Where(x => tripleItems.Contains(x.ItemOneId) && tripleItems.Contains(x.ItemTwoId) && tripleItems.Contains(x.ItemThreeId)).FirstOrDefault();
-										if (foundItem == null)
+										if (!c3.TryAdd(itemTriplet, 1))
 										{
-											c3.Add(new ItemTriple
-											{
-												ItemOneId = basket.Items[i].ItemId,
-												ItemTwoId = basket.Items[j].ItemId,
-												ItemThreeId = basket.Items[k].ItemId,
-												Count = 1
-											});
-										}
-										else
-										{
-											foundItem.Count++;
+											c3[itemTriplet]++;
 										}
 									}
 								}
@@ -160,7 +110,7 @@ namespace MarketBasket
 					}
 				}
 			}
-			var f3 = c3.Where(x => x.Count >= s).ToList();
+			var f3 = c3.Where(x => x.Value >= s).ToList();
 
             sw.Stop();
 
