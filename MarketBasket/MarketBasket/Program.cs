@@ -112,22 +112,25 @@ namespace MarketBasket
 							{
 								for(int k = j + 1; k < basket.Items.Count; k++)
 								{
-									var tripleItems = new List<int>() { basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId };
+									if (triplePool.Contains(basket.Items[k].ItemId))
+									{
+										var tripleItems = new List<int>() { basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId };
 
-									var foundItem = c3.Where(x => tripleItems.Contains(x.ItemOneId) && tripleItems.Contains(x.ItemTwoId) && tripleItems.Contains(x.ItemThreeId)).FirstOrDefault();
-									if (foundItem == null)
-									{
-										c3.Add(new ItemTriple
+										var foundItem = c3.Where(x => tripleItems.Contains(x.ItemOneId) && tripleItems.Contains(x.ItemTwoId) && tripleItems.Contains(x.ItemThreeId)).FirstOrDefault();
+										if (foundItem == null)
 										{
-											ItemOneId = basket.Items[i].ItemId,
-											ItemTwoId = basket.Items[j].ItemId,
-											ItemThreeId = basket.Items[k].ItemId,
-											Count = 1
-										});
-									}
-									else
-									{
-										foundItem.Count++;
+											c3.Add(new ItemTriple
+											{
+												ItemOneId = basket.Items[i].ItemId,
+												ItemTwoId = basket.Items[j].ItemId,
+												ItemThreeId = basket.Items[k].ItemId,
+												Count = 1
+											});
+										}
+										else
+										{
+											foundItem.Count++;
+										}
 									}
 								}
 							}
