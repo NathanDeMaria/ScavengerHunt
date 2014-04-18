@@ -9,35 +9,32 @@ using System.Diagnostics;
 
 namespace MarketBasket
 {
-    class Program
-    {
-        const int NUM_BASKETS = 3000;
+	class Program
+	{
+		const int NUM_BASKETS = 3000;
 		const int s = NUM_BASKETS / 1000;
 
-        public static void Main(string[] args)
-        {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+		public static void Main(string[] args)
+		{
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
 
-            List<Basket> baskets = new List<Basket>();
+			List<Basket> baskets = new List<Basket>();
 			ConcurrentDictionary<int, int> c1 = new ConcurrentDictionary<int, int>();
-            for(int i = 0; i < NUM_BASKETS; i++)
-            {
-                var basket = ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"); 
-                baskets.Add(basket);
-                foreach (var item in basket.Items)
-                {
-					if (!c1.TryAdd(item.ItemId, 1))
-					{
-						c1[item.ItemId]++;
-					}
-                }
-            }
-            var f1 = c1.Where(x => x.Value >= s).Select(x => x.Key).ToList();
+			for (int i = 0; i < NUM_BASKETS; i++)
+			{
+				var basket = ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat");
+				baskets.Add(basket);
+				foreach (var item in basket.Items)
+				{
+					c1.AddOrUpdate(item.ItemId, 1, (key, value) => value + 1);
+				}
+			}
+			var f1 = c1.Where(x => x.Value >= s).Select(x => x.Key).ToList();
 			var c2 = new ConcurrentDictionary<Tuple<int, int>, int>();
 
-            foreach (var basket in baskets)
-            {
+			foreach (var basket in baskets)
+			{
 				for (int i = 0; i < basket.Items.Count - 1; i++)
 				{
 					if (f1.Contains(basket.Items[i].ItemId))
@@ -46,21 +43,18 @@ namespace MarketBasket
 						{
 							if (f1.Contains(basket.Items[j].ItemId))
 							{
-								var itemPair = new Tuple<int, int>(basket.Items[i].ItemId, basket.Items[j].ItemId);			
-
-								if(!c2.TryAdd(itemPair, 1))
-								{
-									c2[itemPair]++;
-								}
+								c2.AddOrUpdate(new Tuple<int, int>(basket.Items[i].ItemId,
+																	basket.Items[j].ItemId),
+													1, (key, value) => value + 1);
 							}
 						}
 					}
 				}
-            }
+			}
 
 			var f2 = c2.Where(x => x.Value >= s).ToList();
 			var singleItems = new List<Item>();
-			foreach(var pair in f2)
+			foreach (var pair in f2)
 			{
 				if (singleItems.Select(x => x.ItemId).Contains(pair.Key.Item1))
 				{
@@ -93,16 +87,14 @@ namespace MarketBasket
 						{
 							if (triplePool.Contains(basket.Items[j].ItemId))
 							{
-								for(int k = j + 1; k < basket.Items.Count; k++)
+								for (int k = j + 1; k < basket.Items.Count; k++)
 								{
 									if (triplePool.Contains(basket.Items[k].ItemId))
 									{
-										var itemTriplet = new Tuple<int, int, int>(basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId);
-
-										if (!c3.TryAdd(itemTriplet, 1))
-										{
-											c3[itemTriplet]++;
-										}
+										c3.AddOrUpdate(new Tuple<int, int, int>(basket.Items[i].ItemId,
+																				basket.Items[j].ItemId,
+																				basket.Items[k].ItemId),
+														1, (key, value) => value + 1);
 									}
 								}
 							}
@@ -112,46 +104,46 @@ namespace MarketBasket
 			}
 			var f3 = c3.Where(x => x.Value >= s).ToList();
 
-            sw.Stop();
+			sw.Stop();
 
-            if (sw.ElapsedMilliseconds < 1000)
-            {
-                Console.WriteLine("\nProcessing Time: {0} milliseconds", sw.ElapsedMilliseconds);
-            }
-            else
-            {
-                Console.WriteLine("\nProcessing Time: {0:00}:{1:00}.{2:00}", sw.Elapsed.Hours, sw.Elapsed.Minutes, sw.Elapsed.Seconds, sw.Elapsed.Milliseconds / 10);
-            }
+			if (sw.ElapsedMilliseconds < 1000)
+			{
+				Console.WriteLine("\nProcessing Time: {0} milliseconds", sw.ElapsedMilliseconds);
+			}
+			else
+			{
+				Console.WriteLine("\nProcessing Time: {0:00}:{1:00}.{2:00}", sw.Elapsed.Hours, sw.Elapsed.Minutes, sw.Elapsed.Seconds, sw.Elapsed.Milliseconds / 10);
+			}
 
-            Console.WriteLine("\nPress the any key to exit.");
-            Console.ReadKey();
-        }
+			Console.WriteLine("\nPress the any key to exit.");
+			Console.ReadKey();
+		}
 
-        public static Basket ReadBasket(string path)
-        {
-            Basket basket = new Basket();
-            using (var reader = new StreamReader(path))
-            {
-                basket.CustomerId = Int32.Parse(reader.ReadLine().Replace("ID: ", ""));
-                basket.State = reader.ReadLine().Replace("State: ", "");
-                basket.Weekday = reader.ReadLine().Replace("Date: ", "");
-                basket.Items = new List<Item>();
+		public static Basket ReadBasket(string path)
+		{
+			Basket basket = new Basket();
+			using (var reader = new StreamReader(path))
+			{
+				basket.CustomerId = Int32.Parse(reader.ReadLine().Replace("ID: ", ""));
+				basket.State = reader.ReadLine().Replace("State: ", "");
+				basket.Weekday = reader.ReadLine().Replace("Date: ", "");
+				basket.Items = new List<Item>();
 
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    basket.Items.Add(new Item
-                    {
-                        ItemId = Int32.Parse(line.Replace("Item: ", "")),
-                        Review = reader.ReadLine().Replace("Review: ", "")                    
-                    });
-                }
-            }
+				string line;
+				while ((line = reader.ReadLine()) != null)
+				{
+					basket.Items.Add(new Item
+					{
+						ItemId = Int32.Parse(line.Replace("Item: ", "")),
+						Review = reader.ReadLine().Replace("Review: ", "")
+					});
+				}
+			}
 
-            return basket;
-        }
+			return basket;
+		}
 
-    }
+	}
 
 
 
