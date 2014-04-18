@@ -20,28 +20,34 @@ namespace MarketBasket
             sw.Start();
 
             List<Basket> baskets = new List<Basket>();
-            List<Item> c1 = new List<Item>();
-            for (int i = 0; i < NUM_BASKETS; i++)
+            //List<Item> c1 = new List<Item>();
+			ConcurrentDictionary<int, int> c1 = new ConcurrentDictionary<int, int>();
+            for(int i = 0; i < NUM_BASKETS; i++)
             {
                 var basket = ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"); 
                 baskets.Add(basket);
                 foreach (var item in basket.Items)
                 {
-                    var foundItem = c1.Where(x => x.ItemId == item.ItemId).FirstOrDefault();
-                    if (foundItem != null)
-                    {
-                        foundItem.Count++;
-                    }
-                    else
-                    {
-                        c1.Add(item);
-                        item.Count = 1;
-                    }
+					if (!c1.TryAdd(item.ItemId, 1))
+					{
+						c1[item.ItemId]++;
+					}
+
+					//var foundItem = c1.Where(x => x.ItemId == item.ItemId).FirstOrDefault();
+					//if (foundItem != null)
+					//{
+					//	foundItem.Count++;
+					//}
+					//else
+					//{
+					//	c1.Add(item);
+					//	item.Count = 1;
+					//}
                 }
             }
-
-            var f1 = c1.Where(x => x.Count >= s).Select(x => x.ItemId).ToList();
+            var f1 = c1.Where(x => x.Value >= s).Select(x => x.Key).ToList();
             var c2 = new List<ItemPair>();
+			var c2Prime = new ConcurrentDictionary<int[], int>();
 
             foreach (var basket in baskets)
             {
@@ -53,6 +59,22 @@ namespace MarketBasket
 						{
 							if (f1.Contains(basket.Items[j].ItemId))
 							{
+								int[] itemPair;
+								if(basket.Items[i].ItemId < basket.Items[j].ItemId)
+								{
+									itemPair = new int[]{ basket.Items[i].ItemId, basket.Items[j].ItemId };
+								}
+								else
+								{
+									itemPair = new int[] { basket.Items[j].ItemId, basket.Items[i].ItemId };
+								}					
+
+								if(!c2Prime.TryAdd(itemPair, 1))
+								{
+									c2Prime[itemPair]++;
+								}
+
+
 								//might be able to take the second part out, but not sure
 								var foundItem = c2.Where(x => (x.ItemOneId == basket.Items[i].ItemId && x.ItemTwoId == basket.Items[j].ItemId) ||
 																(x.ItemOneId == basket.Items[j].ItemId && x.ItemTwoId == basket.Items[i].ItemId)).FirstOrDefault();
