@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
 
 namespace MarketBasket
 {
@@ -13,8 +14,8 @@ namespace MarketBasket
 
         public static void Main(string[] args)
         {
-            Console.WriteLine("Hi :)");
-            Console.ReadLine();
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             List<Basket> baskets = new List<Basket>();
             for (int i = 0; i < NUM_BASKETS; i++)
@@ -23,7 +24,20 @@ namespace MarketBasket
                     Console.WriteLine("read thing #" + i);
                 baskets.Add(ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"));
             }
-            Console.ReadLine();
+
+            sw.Stop();
+
+            if (sw.ElapsedMilliseconds < 1000)
+            {
+                Console.WriteLine("\nProcessing Time: {0} milliseconds", sw.ElapsedMilliseconds);
+            }
+            else
+            {
+                Console.WriteLine("\nProcessing Time: {0:00}:{1:00}.{2:00}", sw.Elapsed.Hours, sw.Elapsed.Minutes, sw.Elapsed.Seconds, sw.Elapsed.Milliseconds / 10);
+            }
+
+            Console.WriteLine("\nPress the any key to exit.");
+            Console.ReadKey();
         }
 
         public static Basket ReadBasket(string path)
