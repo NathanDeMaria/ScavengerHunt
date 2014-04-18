@@ -20,7 +20,6 @@ namespace MarketBasket
             sw.Start();
 
             List<Basket> baskets = new List<Basket>();
-            //List<Item> c1 = new List<Item>();
 			ConcurrentDictionary<int, int> c1 = new ConcurrentDictionary<int, int>();
             for(int i = 0; i < NUM_BASKETS; i++)
             {
@@ -28,97 +27,37 @@ namespace MarketBasket
                 baskets.Add(basket);
                 foreach (var item in basket.Items)
                 {
-					if (!c1.TryAdd(item.ItemId, 1))
-					{
-						c1[item.ItemId]++;
-					}
-
-					//var foundItem = c1.Where(x => x.ItemId == item.ItemId).FirstOrDefault();
-					//if (foundItem != null)
-					//{
-					//	foundItem.Count++;
-					//}
-					//else
-					//{
-					//	c1.Add(item);
-					//	item.Count = 1;
-					//}
+                    c1.AddOrUpdate(item.ItemId, 1, (key, value) => value + 1);
                 }
             }
             var f1 = c1.Where(x => x.Value >= s).Select(x => x.Key).ToList();
-            var c2 = new List<ItemPair>();
-			var c2Prime = new ConcurrentDictionary<int[], int>();
+            var c2 = new ConcurrentDictionary<int, int>();
 
+            int computedKey;
             foreach (var basket in baskets)
             {
-				for (int i = 0; i < basket.Items.Count - 1; i++)
-				{
-					if (f1.Contains(basket.Items[i].ItemId))
-					{
-						for (int j = i + 1; j < basket.Items.Count; j++)
-						{
-							if (f1.Contains(basket.Items[j].ItemId))
-							{
-								int[] itemPair;
-								if(basket.Items[i].ItemId < basket.Items[j].ItemId)
-								{
-									itemPair = new int[]{ basket.Items[i].ItemId, basket.Items[j].ItemId };
-								}
-								else
-								{
-									itemPair = new int[] { basket.Items[j].ItemId, basket.Items[i].ItemId };
-								}					
-
-								if(!c2Prime.TryAdd(itemPair, 1))
-								{
-									c2Prime[itemPair]++;
-								}
-
-
-								//might be able to take the second part out, but not sure
-								var foundItem = c2.Where(x => (x.ItemOneId == basket.Items[i].ItemId && x.ItemTwoId == basket.Items[j].ItemId) ||
-																(x.ItemOneId == basket.Items[j].ItemId && x.ItemTwoId == basket.Items[i].ItemId)).FirstOrDefault();
-								if (foundItem == null)
-								{
-									c2.Add(new ItemPair
-									{
-										ItemOneId = basket.Items[i].ItemId,
-										ItemTwoId = basket.Items[j].ItemId,
-										Count = 1
-									});
-								}
-								else
-								{
-									foundItem.Count++;
-								}
-							}
-						}
-					}
-				}
+                foreach (var itemOne in basket.Items)
+                {
+                    if (f1.Contains(itemOne.ItemId))
+                    {
+                        foreach (var itemTwo in basket.Items)
+                        {
+                            if (itemTwo.ItemId < itemOne.ItemId && f1.Contains(itemOne.ItemId))
+                            {
+                                computedKey = itemOne.ItemId * 1000 + itemTwo.ItemId;
+                                c2.AddOrUpdate(computedKey, 1, (key, value) => value + 1);
+                            }
+                        }
+                    }
+                }
             }
 
-			var f2 = c2.Where(x => x.Count >= s).ToList();
-			var singleItems = new List<Item>();
-			foreach(var pair in f2)
-			{
-				if (singleItems.Select(x => x.ItemId).Contains(pair.ItemOneId))
-				{
-					singleItems.Where(x => x.ItemId == pair.ItemOneId).FirstOrDefault().Count++;
-				}
-				else
-				{
-					singleItems.Add(new Item() { ItemId = pair.ItemOneId, Count = 1 });
-				}
+            var triplePool = c2.Keys.Select(k => k % 1000).ToList();
+            triplePool.AddRange(c2.Keys.Select(k => k / 1000).Distinct().ToList());
+            
+            /*
 
-				if (singleItems.Select(x => x.ItemId).Contains(pair.ItemTwoId))
-				{
-					singleItems.Where(x => x.ItemId == pair.ItemTwoId).FirstOrDefault().Count++;
-				}
-				else
-				{
-					singleItems.Add(new Item() { ItemId = pair.ItemTwoId, Count = 1 });
-				}
-			}
+			
 			var triplePool = singleItems.Where(x => (x.Count >= 2)).Select(x => x.ItemId).ToList();
 
 			var c3 = new List<ItemTriple>();
@@ -160,10 +99,10 @@ namespace MarketBasket
 					}
 				}
 			}
-			var f3 = c3.Where(x => x.Count >= s).ToList();
+			var f3 = c3.Where(x => x.Count >= s).ToList();*/
 
             sw.Stop();
-
+            Console.WriteLine(sw.ElapsedMilliseconds);
             if (sw.ElapsedMilliseconds < 1000)
             {
                 Console.WriteLine("\nProcessing Time: {0} milliseconds", sw.ElapsedMilliseconds);
