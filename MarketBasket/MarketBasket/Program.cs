@@ -12,6 +12,7 @@ namespace MarketBasket
     class Program
     {
         const int NUM_BASKETS = 3000;
+		const int s = NUM_BASKETS / 1000;
 
         public static void Main(string[] args)
         {
@@ -39,37 +40,103 @@ namespace MarketBasket
                 }
             }
 
-            var f1 = c1.Where(x => x.Count >= 3).ToList();
-            var pairs = new List<ItemPair>();
+            var f1 = c1.Where(x => x.Count >= s).Select(x => x.ItemId).ToList();
+            var c2 = new List<ItemPair>();
 
-            for (int i = 0; i < f1.Count; i++)
-            {
-                for (int j = i+1; j <f1.Count; j++)
-                {
-                    pairs.Add(new ItemPair
-                    {
-                        ItemOneId = f1[i].ItemId,
-                        ItemTwoId = f1[j].ItemId
-                    });
-                }
-            }
-            int numPassed = 0;
             foreach (var basket in baskets)
             {
-                foreach (var pair in pairs)
-                {
-                    if (basket.Items.Where(i => i.ItemId == pair.ItemOneId || i.ItemId == pair.ItemTwoId).Count() <= 2)
-                    {
-                        pair.Count++;
-                    }
-                }
-                numPassed++;
-                if (numPassed % 100 == 0)
-                {
-                    Console.WriteLine(numPassed);
-                }
+				for (int i = 0; i < basket.Items.Count - 1; i++)
+				{
+					if (f1.Contains(basket.Items[i].ItemId))
+					{
+						for (int j = i + 1; j < basket.Items.Count; j++)
+						{
+							if (f1.Contains(basket.Items[j].ItemId))
+							{
+								//might be able to take the second part out, but not sure
+								var foundItem = c2.Where(x => (x.ItemOneId == basket.Items[i].ItemId && x.ItemTwoId == basket.Items[j].ItemId) ||
+																(x.ItemOneId == basket.Items[j].ItemId && x.ItemTwoId == basket.Items[i].ItemId)).FirstOrDefault();
+								if (foundItem == null)
+								{
+									c2.Add(new ItemPair
+									{
+										ItemOneId = basket.Items[i].ItemId,
+										ItemTwoId = basket.Items[j].ItemId,
+										Count = 1
+									});
+								}
+								else
+								{
+									foundItem.Count++;
+								}
+							}
+						}
+					}
+				}
             }
-            
+
+			var f2 = c2.Where(x => x.Count >= s).ToList();
+			var singleItems = new List<Item>();
+			foreach(var pair in f2)
+			{
+				if (singleItems.Select(x => x.ItemId).Contains(pair.ItemOneId))
+				{
+					singleItems.Where(x => x.ItemId == pair.ItemOneId).FirstOrDefault().Count++;
+				}
+				else
+				{
+					singleItems.Add(new Item() { ItemId = pair.ItemOneId, Count = 1 });
+				}
+
+				if (singleItems.Select(x => x.ItemId).Contains(pair.ItemTwoId))
+				{
+					singleItems.Where(x => x.ItemId == pair.ItemTwoId).FirstOrDefault().Count++;
+				}
+				else
+				{
+					singleItems.Add(new Item() { ItemId = pair.ItemTwoId, Count = 1 });
+				}
+			}
+			var triplePool = singleItems.Where(x => (x.Count >= 2)).Select(x => x.ItemId).ToList();
+
+			var c3 = new List<ItemTriple>();
+			foreach (var basket in baskets)
+			{
+				for (int i = 0; i < basket.Items.Count - 2; i++)
+				{
+					if (triplePool.Contains(basket.Items[i].ItemId))
+					{
+						for (int j = i + 1; j < basket.Items.Count - 1; j++)
+						{
+							if (triplePool.Contains(basket.Items[j].ItemId))
+							{
+								for(int k = j + 1; k < basket.Items.Count; k++)
+								{
+									var tripleItems = new List<int>() { basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId };
+
+									var foundItem = c3.Where(x => tripleItems.Contains(x.ItemOneId) && tripleItems.Contains(x.ItemTwoId) && tripleItems.Contains(x.ItemThreeId)).FirstOrDefault();
+									if (foundItem == null)
+									{
+										c3.Add(new ItemTriple
+										{
+											ItemOneId = basket.Items[i].ItemId,
+											ItemTwoId = basket.Items[j].ItemId,
+											ItemThreeId = basket.Items[k].ItemId,
+											Count = 1
+										});
+									}
+									else
+									{
+										foundItem.Count++;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			var f3 = c3.Where(x => x.Count >= s).ToList();
+
             sw.Stop();
 
             if (sw.ElapsedMilliseconds < 1000)
