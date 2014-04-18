@@ -42,7 +42,7 @@ namespace MarketBasket
                     {
                         foreach (var itemTwo in basket.Items)
                         {
-                            if (itemTwo.ItemId < itemOne.ItemId && f1.Contains(itemOne.ItemId))
+                            if (itemTwo.ItemId < itemOne.ItemId && f1.Contains(itemTwo.ItemId))
                             {
                                 computedKey = itemOne.ItemId * 1000 + itemTwo.ItemId;
                                 c2.AddOrUpdate(computedKey, 1, (key, value) => value + 1);
@@ -51,56 +51,37 @@ namespace MarketBasket
                     }
                 }
             }
-
-            var triplePool = c2.Keys.Select(k => k % 1000).ToList();
-            triplePool.AddRange(c2.Keys.Select(k => k / 1000).Distinct().ToList());
+            var keys = c2.Where(kvp => kvp.Value >= s).Select(kvp => kvp.Key).ToList();
             
-            /*
+            var triplePool = keys.Select(k => k % 1000).ToList();
+            triplePool.AddRange(keys.Select(k => k / 1000).Distinct().ToList());
+            var c3 = new ConcurrentDictionary<int, int>();
 
-			
-			var triplePool = singleItems.Where(x => (x.Count >= 2)).Select(x => x.ItemId).ToList();
-
-			var c3 = new List<ItemTriple>();
-			foreach (var basket in baskets)
-			{
-				for (int i = 0; i < basket.Items.Count - 2; i++)
-				{
-					if (triplePool.Contains(basket.Items[i].ItemId))
-					{
-						for (int j = i + 1; j < basket.Items.Count - 1; j++)
-						{
-							if (triplePool.Contains(basket.Items[j].ItemId))
-							{
-								for(int k = j + 1; k < basket.Items.Count; k++)
-								{
-									if (triplePool.Contains(basket.Items[k].ItemId))
-									{
-										var tripleItems = new List<int>() { basket.Items[i].ItemId, basket.Items[j].ItemId, basket.Items[k].ItemId };
-
-										var foundItem = c3.Where(x => tripleItems.Contains(x.ItemOneId) && tripleItems.Contains(x.ItemTwoId) && tripleItems.Contains(x.ItemThreeId)).FirstOrDefault();
-										if (foundItem == null)
-										{
-											c3.Add(new ItemTriple
-											{
-												ItemOneId = basket.Items[i].ItemId,
-												ItemTwoId = basket.Items[j].ItemId,
-												ItemThreeId = basket.Items[k].ItemId,
-												Count = 1
-											});
-										}
-										else
-										{
-											foundItem.Count++;
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-			var f3 = c3.Where(x => x.Count >= s).ToList();*/
-
+            foreach (var basket in baskets)
+            {
+                foreach (var itemOne in basket.Items)
+                {
+                    if (f1.Contains(itemOne.ItemId))
+                    {
+                        foreach (var itemTwo in basket.Items)
+                        {
+                            if (itemTwo.ItemId < itemOne.ItemId && f1.Contains(itemTwo.ItemId))
+                            {
+                                foreach (var itemThree in basket.Items)
+                                {
+                                    if (itemThree.ItemId < itemTwo.ItemId && f1.Contains(itemThree.ItemId))
+                                    {
+                                        computedKey = (itemOne.ItemId * 1000000) + (itemTwo.ItemId * 1000) + itemThree.ItemId;
+                                        c3.AddOrUpdate(computedKey, 1, (key, value) => value + 1);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            var answer = c3.Where(kvp => kvp.Value >= s).ToList() ;
+            
             sw.Stop();
             Console.WriteLine(sw.ElapsedMilliseconds);
             if (sw.ElapsedMilliseconds < 1000)
