@@ -19,33 +19,57 @@ namespace MarketBasket
             sw.Start();
 
             List<Basket> baskets = new List<Basket>();
-            ConcurrentDictionary<int, int> items = new ConcurrentDictionary<int, int>();
+            List<Item> c1 = new List<Item>();
             for (int i = 0; i < NUM_BASKETS; i++)
             {
                 var basket = ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"); 
                 baskets.Add(basket);
                 foreach (var item in basket.Items)
                 {
-                    items.AddOrUpdate(item.ItemId, 1, (key, value) => value + 1);
+                    var foundItem = c1.Where(x => x.ItemId == item.ItemId).FirstOrDefault();
+                    if (foundItem != null)
+                    {
+                        foundItem.Count++;
+                    }
+                    else
+                    {
+                        c1.Add(item);
+                        item.Count = 1;
+                    }
                 }
             }
 
-            var f1 = items.Where(x => x.Value >= 3) as ConcurrentDictionary<int, int>;
-            var pairs = new Dictionary<ItemPair, int>();
+            var f1 = c1.Where(x => x.Count >= 3).ToList();
+            var pairs = new List<ItemPair>();
 
-            var keys = f1.Keys.ToList();
-            for (int i = 0; i < keys.Count; i++)
+            for (int i = 0; i < f1.Count; i++)
             {
-                for (int j = i+1; j <keys.Count; j++)
+                for (int j = i+1; j <f1.Count; j++)
                 {
                     pairs.Add(new ItemPair
                     {
-                        ItemOneId = keys[i],
-                        ItemTwoId = keys[j]
-                    }, 0);
+                        ItemOneId = f1[i].ItemId,
+                        ItemTwoId = f1[j].ItemId
+                    });
                 }
             }
-
+            int numPassed = 0;
+            foreach (var basket in baskets)
+            {
+                foreach (var pair in pairs)
+                {
+                    if (basket.Items.Where(i => i.ItemId == pair.ItemOneId || i.ItemId == pair.ItemTwoId).Count() <= 2)
+                    {
+                        pair.Count++;
+                    }
+                }
+                numPassed++;
+                if (numPassed % 100 == 0)
+                {
+                    Console.WriteLine(numPassed);
+                }
+            }
+            
             sw.Stop();
 
             if (sw.ElapsedMilliseconds < 1000)
