@@ -9,13 +9,21 @@ namespace MarketBasket
 {
     class Program
     {
-        static void Main(string[] args)
+        const int NUM_BASKETS = 3000;
+
+        public static void Main(string[] args)
         {
             Console.WriteLine("Hi :)");
             Console.ReadLine();
+
+            List<Basket> baskets = new List<Basket>();
+            for (int i = 0; i < NUM_BASKETS; i++)
+            {
+                baskets.Add(ReadBasket("../../../../new_data/modified_basket_" + i.ToString("000000") + ".dat"));
+            }
         }
 
-        Basket ReadBasket(string path)
+        public static Basket ReadBasket(string path)
         {
             Basket basket = new Basket();
             using (var reader = new StreamReader(path))
