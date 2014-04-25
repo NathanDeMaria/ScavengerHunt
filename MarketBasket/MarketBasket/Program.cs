@@ -126,7 +126,15 @@ namespace MarketBasket
                     }
                 } 
             }
-            
+
+            using (var writer = new StreamWriter("../../../../outputPhase2.txt"))
+            {
+                writer.WriteLine("Set\tMonday\tTuesday\tWednesday\tThursday\tFriday\tSaturday\tSunday");
+                foreach (var triple in triples)
+                {
+                    writer.WriteLine(PrintSetWithReviews(triple));
+                }
+            }
 
             sw.Stop();
 
@@ -188,6 +196,32 @@ namespace MarketBasket
             result.Append(itemSet.Key.Item3);
             result.Append(") ");
             result.Append(itemSet.Value);
+
+            return result.ToString();
+        }
+
+        private static string PrintSetWithReviews(Triple triple)
+        {
+            StringBuilder result = new StringBuilder();
+
+            result.Append("(");
+            result.Append(triple.Ids[0]);
+            result.Append(",");
+            result.Append(triple.Ids[1]);
+            result.Append(",");
+            result.Append(triple.Ids[2]);
+            result.Append(")\t");
+            foreach (var score in triple.Scores)
+            {
+                if (score != null)
+                {
+                    result.Append(score.ToString()+"\t");
+                }
+                else
+                {
+                    result.Append("0\t");
+                }
+            }
 
             return result.ToString();
         }
