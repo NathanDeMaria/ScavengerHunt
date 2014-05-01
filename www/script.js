@@ -19,6 +19,7 @@ var bars = d3.select("#container").append("svg");
 
 var tooltip = bars.append("text")
                 .style("visibility", "visible")
+                .style("font-size", "36px")
                 .attr("x", 50)
                 .attr("y", 50);
 
@@ -50,7 +51,7 @@ d3.tsv("../outputPhase2.txt", type, function(error, data) {
       .on("mousedown", function() { d3.event.stopPropagation(); })
       .on("click", function(d){
         d3.select(this).style("stroke-width", "2.5");
-        tooltip.text(d.Set);
+        tooltip.text("Itemset: " + d.Set);
 
         showBar(d, this);
       });
@@ -94,72 +95,67 @@ function type(d) {
 
 function showBar(d, lastOne) {
  
+  //remove the last graph shown
   if(typeof lastSelected != 'undefined') {
     d3.select(lastSelected).style("stroke-width", "1");        
   }
- 
   lastSelected = lastOne;
-        //hide bar thing
-  d3.select("g").remove();
+  d3.selectAll("rect").remove();
+  d3.selectAll("g").remove();
 
-  var barGroup = bars.append("g");
+  var weekData = [{"day": "Sunday", "value": d.Sunday}, 
+                  {"day": "Monday", "value": d.Monday}, 
+                  {"day": "Tuesday", "value": d.Tuesday}, 
+                  {"day": "Wednesday", "value": d.Wednesday}, 
+                  {"day": "Thursday", "value": d.Thursday}, 
+                  {"day": "Friday", "value": d.Friday}, 
+                  {"day": "Saturday", "value": d.Saturday}];
 
-  var suHeight = d.Sunday * barScale;
-  var mHeight = d.Monday * barScale;
-  var tHeight = d.Tuesday * barScale;
-  var wHeight = d.Wednesday * barScale;
-  var thHeight = d.Thursday * barScale;
-  var fHeight = d.Friday * barScale;
-  var saHeight = d.Saturday * barScale;
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(suHeight))
-    .attr("x", (barWidth + 1) * 0)
-    .attr("y", (suHeight>=0)?(height / 2 - suHeight):(height / 2))
-    .attr("fill", "blue");
+  var margin = {top: 80, right: 20, bottom: 20, left: 40};
+  var localWidth = width - margin.left - margin.right;
+  var localHeight = height - margin.top - margin.bottom;
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(mHeight))
-    .attr("x", (barWidth + 1) * 1)
-    .attr("y", (mHeight>=0)?(height / 2 - mHeight):(height / 2))
-    .attr("fill", "blue");
+  var xScale = d3.scale.ordinal().rangeRoundBands([0, localWidth], .1);
+  var yScale = d3.scale.linear().range([localHeight - margin.top - 20, 0]);
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(tHeight))
-    .attr("x", (barWidth + 1) * 2)
-    .attr("y", (tHeight>=0)?(height / 2 - tHeight):(height / 2))
-    .attr("fill", "blue");
+  var xAxis = d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom");
+  var yAxis = d3.svg.axis()
+                .scale(yScale)
+                .orient("left");
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(wHeight))
-    .attr("x", (barWidth + 1) * 3)
-    .attr("y", (wHeight>=0)?(height / 2 - wHeight):(height / 2))
-    .attr("fill", "blue");
+  var barGroup = bars.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                  .attr("height", localHeight)
+                  .attr("width", localWidth);
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(thHeight))
-    .attr("x", (barWidth + 1) * 4)
-    .attr("y", (thHeight>=0)?(height / 2 - thHeight):(height / 2))
-    .attr("fill", "blue");
+  var x0 = Math.max(-d3.min(weekData), d3.max(weekData));
+  xScale.domain(weekData.map(function(d) { return d.day; }));
+  yScale.domain([-2, 2]);
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(fHeight))
-    .attr("x", (barWidth + 1) * 5)
-    .attr("y", (fHeight>=0)?(height / 2 - fHeight):(height / 2))
-    .attr("fill", "blue");
+  barGroup.append("g")
+     .attr("class", "x axis")
+     .attr("transform", "translate(0," + (localHeight - margin.top - 20)/2 + ")")
+     .call(xAxis);
+  barGroup.append("g")
+     .attr("class", "y axis")
+     .call(yAxis);
 
-  barGroup.append("rect")
-    .attr("width", barWidth)
-    .attr("height", Math.abs(saHeight))
-    .attr("x", (barWidth + 1) * 6)
-    .attr("y", (saHeight>=0)?(height / 2 - saHeight):(height / 2))
-    .attr("fill", "blue");
+  barGroup.selectAll(".bar")
+      .data(weekData).enter().append("rect")
+      .attr("class", function(d, i) {
+          if(d.value > 0) {
+            return "bar positive"
+          } else {
+            return "bar negative";
+          }
+          //return clas;
+      })
+      .attr("x", function(d, i) { return xScale(d.day); })
+      .attr("y", function(d, i) { return yScale(Math.max(0, d.value));})
+      .attr("width", xScale.rangeBand())
+      .attr("height", function(d) { return Math.abs(yScale(d.value) - yScale(0)); });
 }
 
 
