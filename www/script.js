@@ -11,6 +11,8 @@ var magnify = 70;
 //constant for shifting bubble to the left
 var LEFT_SHIFT = 100;
 
+displayColorScale();
+
 var svg = d3.select("#container").append("svg");
 
 var bars = d3.select("#container").append("svg");
@@ -63,10 +65,7 @@ d3.tsv("../outputPhase2.txt", type, function(error, data) {
     .transition()
       .duration(1000)
       .style("opacity", 1);
-/*
-  d3.select("body")
-      .on("mousedown", mousedown);
-*/
+
   function tick(e) {
 
     // Push nodes into the cluster
@@ -79,15 +78,7 @@ d3.tsv("../outputPhase2.txt", type, function(error, data) {
     node.attr("cx", function(d) { return d.x - LEFT_SHIFT; })
         .attr("cy", function(d) { return d.y; });
   }
-/*
-  function mousedown() {
-    data.forEach(function(o, i) {
-      o.x += (Math.random() - .5) * 40;
-      o.y += (Math.random() - .5) * 40;
-    });
-    force.resume();
-  }
-*/
+
 });
 
 
@@ -167,4 +158,45 @@ function showBar(d) {
     .attr("x", (barWidth + 1) * 6)
     .attr("y", (saHeight>=0)?(height / 2 - saHeight):(height / 2))
     .attr("fill", "blue");
+}
+
+
+function displayColorScale() {
+  var colorScale = d3.scale.linear()
+                        .domain([0, width / 2, width])
+                        .range(["red", "white", "blue"]);
+
+  var space = d3.select("#colorBar")
+                    .data([{interpolate: d3.interpolateRgb}])
+                    .style("width", width + "px")
+                    .style("height", "30px");
+
+  space.append("canvas")
+          .attr("width", width)
+          .attr("height", 1)
+          .style("width", width + "px")
+          .style("height", "30px")
+          .each(render);
+
+  var spaceLabel = space.append("div");
+  spaceLabel.append("p")
+      .style("float", "left")
+      .text("Negative");
+  spaceLabel.append("p")
+      .style("float", "right")
+      .text("Positive");
+
+  function render(d) {
+    var context = this.getContext("2d"),
+    image = context.createImageData(width, 1);
+    colorScale.interpolate(d.interpolate);
+    for (var i = 0, j = -1, c; i < width; ++i) {
+      c = d3.rgb(colorScale(i));
+      image.data[++j] = c.r;
+      image.data[++j] = c.g;
+      image.data[++j] = c.b;
+      image.data[++j] = 255;
+    }
+    context.putImageData(image, 0, 0);
+  }
 }
