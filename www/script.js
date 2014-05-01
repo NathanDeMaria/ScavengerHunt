@@ -29,7 +29,7 @@ var tooltip = bars.append("text")
 var lastSelected;
 
 
-d3.tsv("../outputPhase2.txt", type, function(error, data) {
+d3.tsv("outputPhase2.txt", type, function(error, data) {
 
   var ramp = d3.scale.linear().domain([d3.min(data, function(d) { return d.mean; }), 0,
                                       d3.max(data, function(d) { return d.mean; })]).range(["red","white","blue"]);
