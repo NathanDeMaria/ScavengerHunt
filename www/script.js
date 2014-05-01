@@ -22,6 +22,8 @@ var tooltip = bars.append("text")
                 .attr("x", 50)
                 .attr("y", 50);
 
+var lastSelected;
+
 
 d3.tsv("../outputPhase2.txt", type, function(error, data) {
 
@@ -46,19 +48,11 @@ d3.tsv("../outputPhase2.txt", type, function(error, data) {
       .style("stroke", function(d) { return "black"; })
       .call(force.drag)
       .on("mousedown", function() { d3.event.stopPropagation(); })
-      .on("mouseover", function(d){
+      .on("click", function(d){
         d3.select(this).style("stroke-width", "2.5");
         tooltip.text(d.Set);
 
-        //show bar thing
-        showBar(d);
-      })
-      .on("mouseout", function(d){
-        d3.select(this).style("stroke-width", "1");
-        tooltip.text("");
-
-        //hide bar thing
-        d3.select("g").remove();
+        showBar(d, this);
       });
 
   svg.style("opacity", 1e-6)
@@ -98,7 +92,15 @@ function type(d) {
 }
 
 
-function showBar(d) {
+function showBar(d, lastOne) {
+ 
+  if(typeof lastSelected != 'undefined') {
+    d3.select(lastSelected).style("stroke-width", "1");        
+  }
+ 
+  lastSelected = lastOne;
+        //hide bar thing
+  d3.select("g").remove();
 
   var barGroup = bars.append("g");
 
