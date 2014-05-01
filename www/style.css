@@ -20,13 +20,8 @@
 }
 
 #container {
-	height: 700px; 
-	width: 1450px;
-}
-
-svg {
-	width: 700px;
-	height: 700px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .bar.positive {

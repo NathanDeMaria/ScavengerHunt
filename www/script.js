@@ -1,21 +1,24 @@
-var width = 700,
-    height = 700;
+var width = (window.innerWidth-50)/2 * .8,
+height = width;
 
-var barWidth = 50;
-var barScale = 50;
-
-var fill = d3.scale.category10();
-
-var magnify = 70;
+var magnify = width / 10;
 
 //constant for shifting bubble to the left
 var LEFT_SHIFT = 100;
 
 displayColorScale();
 
-var svg = d3.select("#container").append("svg");
+d3.select("#container")
+          .style("width", (2*width+50) + "px")
+          .style("height", height + "px");
 
-var bars = d3.select("#container").append("svg");
+var svg = d3.select("#container").append("svg")
+              .style("width", width+"px")
+              .style("height", height+"px");
+
+var bars = d3.select("#container").append("svg")
+              .style("width", width+"px")
+              .style("height", height+"px");
 
 var tooltip = bars.append("text")
                 .style("visibility", "visible")
